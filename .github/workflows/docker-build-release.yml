@@ -13,6 +13,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    timeout-minutes: 60
+
     strategy:
       matrix:
         os: [ubuntu, debian]
@@ -41,8 +43,8 @@ jobs:
         with:
           context: .
           file: ./mainline/${{ matrix.os }}-${{ matrix.args }}/Dockerfile
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/nginx:cache-${{ matrix.os }}-${{ matrix.args }}
+          cache-to: type=registry,ref=ghcr.io/${{ github.repository_owner }}/nginx:cache-${{ matrix.os }}-${{ matrix.args }},mode=max
           platforms: |
             linux/amd64
             linux/arm64
