@@ -1,19 +1,21 @@
 FROM ubuntu:24.04 AS build
 
+# 安装编译工具和库依赖
 RUN apt update \
     && apt upgrade -y \
-    && apt install -y curl
+    && apt install -y curl build-essential cmake libtool pkg-config autoconf automake \
+                    libgeoip-dev libpcre2-dev zlib1g-dev libxml2-dev libxslt1-dev libgd-dev
 
 ENV NGINX_VERSION=1.29.2
 ENV OPENSSL_VERSION=3.6.0
 ENV VTS_VERSION=0.2.4
 ENV MODSECURITY_VERSION=3.0.14
 ENV MODSECURITY_NGINX_VERSION=1.0.4
-ENV CORERULESET_VERSION=4.19.0
+ENV CORERULESET_VERSION=4.20.0
 ENV LIBINJECTION_VERSION=3.10.0
-ENV MBED_TLS_VERSION=3.6.3
-ENV BROTLI_VERSION=1.1.0
-ENV NJS_VERSION=0.9.3
+ENV MBED_TLS_VERSION=3.6.5
+ENV BROTLI_VERSION=1.2.0
+ENV NJS_VERSION=0.9.4
 
 WORKDIR /workdir
 RUN curl -Ljf https://github.com/nginx/nginx/archive/refs/tags/release-${NGINX_VERSION}.tar.gz -o nginx.tar.gz \
@@ -52,10 +54,6 @@ RUN mv nginx-release-${NGINX_VERSION} nginx \
     && rm -rf brotli-nginx/deps/brotli \
     && mv brotli-nginx/deps/brotli-${BROTLI_VERSION} brotli-nginx/deps/brotli \
     && mv njs-${NJS_VERSION} njs
-
-# 安装编译工具和依赖
-RUN apt install -y git build-essential cmake libtool pkg-config autoconf automake
-RUN apt install -y libgeoip-dev libpcre2-dev zlib1g-dev libxml2-dev libxslt1-dev libgd-dev
 
 # 编译ModSecurity
 WORKDIR /workdir/modsecurity
