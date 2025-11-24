@@ -6,7 +6,7 @@ RUN apt update \
     && apt install -y curl build-essential cmake libtool pkg-config autoconf automake \
                     libgeoip-dev libpcre2-dev zlib1g-dev libxml2-dev libxslt1-dev libgd-dev
 
-ENV NGINX_VERSION=1.29.2
+ENV NGINX_VERSION=1.29.3
 ENV OPENSSL_VERSION=3.6.0
 ENV VTS_VERSION=0.2.4
 ENV MODSECURITY_VERSION=3.0.14
