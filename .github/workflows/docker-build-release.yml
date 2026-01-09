@@ -37,8 +37,11 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Get short SHA
+        id: vars
+        run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
       - name: Build and push Docker image
-        if: matrix.os != 'ubuntu' || matrix.args != 'normal'
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -48,8 +51,6 @@ jobs:
           platforms: |
             linux/amd64
             linux/arm64
-            linux/arm/v7
-            linux/arm/v8
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/nginx:${{ matrix.os }}-${{ matrix.args }}
+            ghcr.io/${{ github.repository_owner }}/nginx:${{ matrix.os }}-${{ matrix.args }}-${{ steps.vars.outputs.short_sha }}
