@@ -1,60 +1,22 @@
-FROM ubuntu:24.04 AS build
+FROM debian:13 AS build
 
 # 安装编译工具和库依赖
 RUN apt update \
     && apt upgrade -y \
-    && apt install -y curl build-essential cmake libtool pkg-config autoconf automake \
+    && apt install -y git build-essential cmake libtool pkg-config autoconf automake \
                     libgeoip-dev libpcre2-dev zlib1g-dev libxml2-dev libxslt1-dev libgd-dev
 
-ENV NGINX_VERSION=1.31.0
-ENV OPENSSL_VERSION=4.0.0
-ENV VTS_VERSION=0.2.5
-ENV MODSECURITY_VERSION=3.0.15
-ENV MODSECURITY_NGINX_VERSION=1.0.4
-ENV CORERULESET_VERSION=4.26.0
-ENV LIBINJECTION_VERSION=3.10.0
-ENV MBED_TLS_VERSION=3.6.5
-ENV BROTLI_VERSION=1.2.0
-ENV NJS_VERSION=0.9.9
-
 WORKDIR /workdir
-RUN curl -Ljf https://github.com/nginx/nginx/archive/refs/tags/release-${NGINX_VERSION}.tar.gz -o nginx.tar.gz \
-    && curl -Ljf https://github.com/openssl/openssl/archive/refs/tags/openssl-${OPENSSL_VERSION}.tar.gz -o openssl.tar.gz \
-    && curl -Ljf https://github.com/vozlt/nginx-module-vts/archive/refs/tags/v${VTS_VERSION}.tar.gz -o vts.tar.gz \
-    && curl -Ljf https://github.com/owasp-modsecurity/ModSecurity/archive/refs/tags/v${MODSECURITY_VERSION}.tar.gz -o modsecurity.tar.gz \
-    && curl -Ljf https://github.com/owasp-modsecurity/ModSecurity-nginx/archive/refs/tags/v${MODSECURITY_NGINX_VERSION}.tar.gz -o modsecurity-nginx.tar.gz \
-    && curl -Ljf https://github.com/coreruleset/coreruleset/releases/download/v${CORERULESET_VERSION}/coreruleset-${CORERULESET_VERSION}-minimal.tar.gz -o coreruleset.tar.gz \
-    && curl -Ljf https://github.com/libinjection/libinjection/archive/refs/tags/v${LIBINJECTION_VERSION}.tar.gz -o libinjection.tar.gz \
-    && curl -Ljf https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/mbedtls-${MBED_TLS_VERSION}.tar.gz -o mbedtls.tar.gz \
-    && curl -Ljf https://github.com/google/brotli/archive/refs/tags/v${BROTLI_VERSION}.tar.gz -o brotli.tar.gz \
-    && curl -Ljf https://github.com/google/ngx_brotli/archive/refs/heads/master.tar.gz -o brotli-nginx.tar.gz \
-    && curl -Ljf https://github.com/nginx/njs/archive/refs/tags/${NJS_VERSION}.tar.gz -o njs.tar.gz
+RUN git clone --depth=1 https://github.com/nginx/nginx.git nginx \
+    && git clone --depth=1 https://github.com/openssl/openssl.git openssl \
+    && git clone --depth=1 https://github.com/vozlt/nginx-module-vts.git vts-nginx \
+    && git clone --depth=1 --recursive https://github.com/owasp-modsecurity/ModSecurity.git modsecurity \
+    && git clone --depth=1 https://github.com/owasp-modsecurity/ModSecurity-nginx.git modsecurity-nginx \
+    && git clone --depth=1 https://github.com/coreruleset/coreruleset.git coreruleset \
+    && git clone --depth=1 https://github.com/google/ngx_brotli.git brotli-nginx \
+    && git clone --depth=1 https://github.com/google/brotli.git brotli-nginx/deps/brotli \
+    && git clone --depth=1 https://github.com/nginx/njs.git njs
 
-RUN tar -zxvf nginx.tar.gz \
-    && tar -zxvf openssl.tar.gz \
-    && tar -zxvf vts.tar.gz \
-    && tar -zxvf modsecurity.tar.gz \
-    && tar -zxvf modsecurity-nginx.tar.gz \
-    && tar -zxvf coreruleset.tar.gz \
-    && tar -zxvf libinjection.tar.gz -C ModSecurity-${MODSECURITY_VERSION}/others/ \
-    && tar -zxvf mbedtls.tar.gz -C ModSecurity-${MODSECURITY_VERSION}/others/ \
-    && tar -zxvf brotli-nginx.tar.gz && mv ngx_brotli-master brotli-nginx && mkdir -p brotli-nginx/deps \
-    && tar -zxvf brotli.tar.gz -C brotli-nginx/deps/ \
-    && tar -zxvf njs.tar.gz
-
-# 移除文件夹版本号
-RUN mv nginx-release-${NGINX_VERSION} nginx \
-    && mv openssl-openssl-${OPENSSL_VERSION} openssl \
-    && mv nginx-module-vts-${VTS_VERSION} vts-nginx \
-    && mv ModSecurity-${MODSECURITY_VERSION} modsecurity \
-    && mv ModSecurity-nginx-${MODSECURITY_NGINX_VERSION} modsecurity-nginx \
-    && mv coreruleset-${CORERULESET_VERSION} coreruleset \
-    && rm -rf modsecurity/others/libinjection modsecurity/others/mbedtls \
-    && mv modsecurity/others/libinjection-${LIBINJECTION_VERSION} modsecurity/others/libinjection \
-    && mv modsecurity/others/mbedtls-mbedtls-${MBED_TLS_VERSION} modsecurity/others/mbedtls \
-    && rm -rf brotli-nginx/deps/brotli \
-    && mv brotli-nginx/deps/brotli-${BROTLI_VERSION} brotli-nginx/deps/brotli \
-    && mv njs-${NJS_VERSION} njs
 
 # 编译ModSecurity
 WORKDIR /workdir/modsecurity
@@ -125,14 +87,14 @@ RUN  ./auto/configure \
         --with-http_v3_module \
         --with-http_xslt_module=dynamic \
         --with-ipv6 \
-        --with-mail=dynamic \
+        --with-mail \
         --with-mail_ssl_module \
         --with-stream \
         --with-stream_geoip_module=dynamic \
         --with-stream_realip_module \
         --with-stream_ssl_module \
         --with-stream_ssl_preread_module \
-        --with-threads \
+        --with-threads \                                                                                                                                                                                                                                                                                                                                                                                              
         --with-pcre \
         --with-pcre-jit \
         # --with-jemalloc \
@@ -150,7 +112,7 @@ RUN  ./auto/configure \
     && make -j \
     && make install
 
-FROM ubuntu:24.04 AS runtime
+FROM debian:13 AS runtime
 
 COPY --from=build /usr/sbin/nginx /usr/sbin/nginx
 COPY --from=build /usr/lib/nginx/modules/ /usr/lib/nginx/modules/
@@ -170,10 +132,7 @@ RUN groupadd --system nginx \
     && apt-get upgrade -y \
     && apt-get install -y curl dnsutils net-tools iputils-ping \
         libpcre2-8-0 \
-        libgeoip1 \
-        libgd3 \
-        libxml2 \
-        libxslt1.1 \
+        libgeoip1t64 \
     # clean up
     && apt-get clean \
     && apt-get autoclean \

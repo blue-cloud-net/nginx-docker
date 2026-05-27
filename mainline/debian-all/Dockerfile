@@ -6,16 +6,16 @@ RUN apt update \
     && apt install -y curl build-essential cmake libtool pkg-config autoconf automake \
                     libgeoip-dev libpcre2-dev zlib1g-dev libxml2-dev libxslt1-dev libgd-dev
 
-ENV NGINX_VERSION=1.29.4
-ENV OPENSSL_VERSION=3.6.0
+ENV NGINX_VERSION=1.31.0
+ENV OPENSSL_VERSION=4.0.0
 ENV VTS_VERSION=0.2.5
-ENV MODSECURITY_VERSION=3.0.14
+ENV MODSECURITY_VERSION=3.0.15
 ENV MODSECURITY_NGINX_VERSION=1.0.4
-ENV CORERULESET_VERSION=4.22.0
+ENV CORERULESET_VERSION=4.26.0
 ENV LIBINJECTION_VERSION=3.10.0
 ENV MBED_TLS_VERSION=3.6.5
 ENV BROTLI_VERSION=1.2.0
-ENV NJS_VERSION=0.9.4
+ENV NJS_VERSION=0.9.9
 
 WORKDIR /workdir
 RUN curl -Ljf https://github.com/nginx/nginx/archive/refs/tags/release-${NGINX_VERSION}.tar.gz -o nginx.tar.gz \
@@ -28,8 +28,9 @@ RUN curl -Ljf https://github.com/nginx/nginx/archive/refs/tags/release-${NGINX_V
     && curl -Ljf https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/mbedtls-${MBED_TLS_VERSION}.tar.gz -o mbedtls.tar.gz \
     && curl -Ljf https://github.com/google/ngx_brotli/archive/refs/heads/master.tar.gz -o brotli-nginx.tar.gz \
     && curl -Ljf https://github.com/google/brotli/archive/refs/tags/v${BROTLI_VERSION}.tar.gz -o brotli.tar.gz \
-    && curl -Ljf https://github.com/nginx/njs/archive/refs/tags/${NJS_VERSION}.tar.gz -o njs.tar.gz \
-    && tar -zxvf nginx.tar.gz \
+    && curl -Ljf https://github.com/nginx/njs/archive/refs/tags/${NJS_VERSION}.tar.gz -o njs.tar.gz
+
+RUN tar -zxvf nginx.tar.gz \
     && tar -zxvf openssl.tar.gz \
     && tar -zxvf vts.tar.gz \
     && tar -zxvf modsecurity.tar.gz \
