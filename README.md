@@ -1,6 +1,11 @@
 # NGINX Docker (Mainline)
 
-本目录包含基于 Debian 13 与 Ubuntu 24.04 的 NGINX 最新版本 自编译镜像。镜像集成以下特性与动态模块：
+本目录包含基于 Debian 13 与 Ubuntu 24.04 的 NGINX 最新版本自编译镜像。提供两个版本：
+
+- **nightly 版本**：使用各项目的 master/main 主分支最新代码，通过 `git clone --depth=1` 浅层克隆获取，适合需要最新功能与修复的场景
+- **all 版本**：使用指定版本号的源代码，编译过程更稳定可控
+
+镜像集成以下特性与动态模块：
 
 - OpenSSL 源码构建（`--with-openssl`）
 - HTTP/2 与 HTTP/3（`--with-http_v2_module`, `--with-http_v3_module`）
@@ -12,8 +17,10 @@
 
 ## 目录结构
 
-- `mainline/debian-all/Dockerfile`：基于 Debian 的构建
-- `mainline/ubuntu-all/Dockerfile`：基于 Ubuntu 的构建
+- `mainline/debian-nightly/Dockerfile`：基于 Debian 的 nightly 构建（主分支最新）
+- `mainline/debian-all/Dockerfile`：基于 Debian 的稳定版本构建（指定版本号）
+- `mainline/ubuntu-nightly/Dockerfile`：基于 Ubuntu 的 nightly 构建（主分支最新）
+- `mainline/ubuntu-all/Dockerfile`：基于 Ubuntu 的稳定版本构建（指定版本号）
 - `conf/`：Nginx 主配置与片段（`nginx.conf`, `http.conf.d/*.conf`）
 - `entrypoint/`：容器入口与初始化脚本
 - `html/`：默认静态页面
@@ -23,10 +30,16 @@
 请在项目根目录运行：
 
 ```zsh
-# 构建 Debian 版本
-docker build -t my-nginx:debian -f build/nginx/mainline/debian-all/Dockerfile .
+# Nightly 版本（基于 master 主分支最新代码）
+# 构建 Debian nightly
+docker build -t my-nginx:debian-nightly -f build/nginx/mainline/debian-nightly/Dockerfile .
+# 构建 Ubuntu nightly
+docker build -t my-nginx:ubuntu-nightly -f build/nginx/mainline/ubuntu-nightly/Dockerfile .
 
-# 构建 Ubuntu 版本
+# Stable 版本（基于指定版本号）
+# 构建 Debian stable
+docker build -t my-nginx:debian -f build/nginx/mainline/debian-all/Dockerfile .
+# 构建 Ubuntu stable
 docker build -t my-nginx:ubuntu -f build/nginx/mainline/ubuntu-all/Dockerfile .
 ```
 
@@ -35,10 +48,16 @@ docker build -t my-nginx:ubuntu -f build/nginx/mainline/ubuntu-all/Dockerfile .
 ## 运行
 
 ```zsh
-# 运行 Debian 镜像
+# 运行 Debian nightly 镜像
+docker run --rm -p 8080:80 -p 8443:443 my-nginx:debian-nightly
+
+# 运行 Ubuntu nightly 镜像
+docker run --rm -p 8080:80 -p 8443:443 my-nginx:ubuntu-nightly
+
+# 运行 Debian stable 镜像
 docker run --rm -p 8080:80 -p 8443:443 my-nginx:debian
 
-# 运行 Ubuntu 镜像
+# 运行 Ubuntu stable 镜像
 docker run --rm -p 8080:80 -p 8443:443 my-nginx:ubuntu
 ```
 
@@ -49,6 +68,10 @@ docker run --rm -p 8080:80 -p 8443:443 my-nginx:ubuntu
 - 查看已编译模块与外部模块：
 
 ```zsh
+# nightly 版本
+docker run --rm my-nginx:debian-nightly nginx -V 2>&1 | tr ' ' '\n' | grep -E '(add-dynamic-module|with-http_|with-stream)'
+
+# stable 版本
 docker run --rm my-nginx:debian nginx -V 2>&1 | tr ' ' '\n' | grep -E '(add-dynamic-module|with-http_|with-stream)'
 ```
 
