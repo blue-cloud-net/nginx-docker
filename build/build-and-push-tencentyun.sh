@@ -40,11 +40,12 @@ for dockerfile in $dockerfiles; do
 
     # Build the Docker image for the specified platforms
     # Use --platform to specify the target platforms
+    # --platform "linux/amd64,linux/arm64" \
     # Use --push to push the image directly to the repository
     docker buildx build \
         --cache-from "type=registry,ref=$repository:$version-buildcache" \
         --cache-to "type=registry,ref=$repository:$version-buildcache,mode=max" \
-        --platform "linux/amd64,linux/arm64" \
+        --platform "linux/amd64" \
         -f "$dockerfile" \
         -t "$repository:$version" \
         -t "$repository:$version-$(date +%Y%m%d%H%M%S)" \
