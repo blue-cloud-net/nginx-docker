@@ -11,9 +11,12 @@ ENV OPENSSL_VERSION=4.0.2
 ENV VTS_VERSION=0.2.7
 ENV MODSECURITY_VERSION=3.0.16
 ENV MODSECURITY_NGINX_VERSION=1.0.4
-ENV MBED_TLS_VERSION=3.6.5
 ENV CORERULESET_VERSION=4.29.0
 ENV LIBINJECTION_VERSION=4.0.0
+# ModSecurity 3.0.16 的 others/mbedtls 子模块所锁定的 commit：
+# tf-psa-crypto 是 mbedtls 的嵌套子模块，GitHub 归档包中不含其内容，需要单独下载
+ENV MBED_TLS_COMMIT=0fe989b6b514192783c469039edd325fd0989806
+ENV TF_PSA_CRYPTO_COMMIT=29160dd877d29658279fd683b2ae57b320ddcf09
 ENV BROTLI_VERSION=1.2.0
 ENV NJS_VERSION=1.0.1
 
@@ -25,7 +28,8 @@ RUN curl -Ljf https://github.com/nginx/nginx/archive/refs/tags/release-${NGINX_V
     && curl -Ljf https://github.com/owasp-modsecurity/ModSecurity-nginx/archive/refs/tags/v${MODSECURITY_NGINX_VERSION}.tar.gz -o modsecurity-nginx.tar.gz \
     && curl -Ljf https://github.com/coreruleset/coreruleset/releases/download/v${CORERULESET_VERSION}/coreruleset-${CORERULESET_VERSION}-minimal.tar.gz -o coreruleset.tar.gz \
     && curl -Ljf https://github.com/libinjection/libinjection/archive/refs/tags/v${LIBINJECTION_VERSION}.tar.gz -o libinjection.tar.gz \
-    && curl -Ljf https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/mbedtls-${MBED_TLS_VERSION}.tar.gz -o mbedtls.tar.gz \
+    && curl -Ljf https://github.com/Mbed-TLS/mbedtls/archive/${MBED_TLS_COMMIT}.tar.gz -o mbedtls.tar.gz \
+    && curl -Ljf https://github.com/Mbed-TLS/TF-PSA-Crypto/archive/${TF_PSA_CRYPTO_COMMIT}.tar.gz -o tf-psa-crypto.tar.gz \
     && curl -Ljf https://github.com/google/brotli/archive/refs/tags/v${BROTLI_VERSION}.tar.gz -o brotli.tar.gz \
     && curl -Ljf https://github.com/google/ngx_brotli/archive/refs/heads/master.tar.gz -o brotli-nginx.tar.gz \
     && curl -Ljf https://github.com/nginx/njs/archive/refs/tags/${NJS_VERSION}.tar.gz -o njs.tar.gz
@@ -38,6 +42,7 @@ RUN tar -zxvf nginx.tar.gz \
     && tar -zxvf coreruleset.tar.gz \
     && tar -zxvf libinjection.tar.gz -C ModSecurity-${MODSECURITY_VERSION}/others/ \
     && tar -zxvf mbedtls.tar.gz -C ModSecurity-${MODSECURITY_VERSION}/others/ \
+    && tar -zxvf tf-psa-crypto.tar.gz -C ModSecurity-${MODSECURITY_VERSION}/others/ \
     && tar -zxvf brotli-nginx.tar.gz && mv ngx_brotli-master brotli-nginx && mkdir -p brotli-nginx/deps \
     && tar -zxvf brotli.tar.gz -C brotli-nginx/deps/ \
     && tar -zxvf njs.tar.gz
@@ -51,7 +56,9 @@ RUN mv nginx-release-${NGINX_VERSION} nginx \
     && mv coreruleset-${CORERULESET_VERSION} coreruleset \
     && rm -rf modsecurity/others/libinjection modsecurity/others/mbedtls \
     && mv modsecurity/others/libinjection-${LIBINJECTION_VERSION} modsecurity/others/libinjection \
-    && mv modsecurity/others/mbedtls-mbedtls-${MBED_TLS_VERSION} modsecurity/others/mbedtls \
+    && mv modsecurity/others/mbedtls-${MBED_TLS_COMMIT} modsecurity/others/mbedtls \
+    && rm -rf modsecurity/others/mbedtls/tf-psa-crypto \
+    && mv modsecurity/others/TF-PSA-Crypto-${TF_PSA_CRYPTO_COMMIT} modsecurity/others/mbedtls/tf-psa-crypto \
     && rm -rf brotli-nginx/deps/brotli \
     && mv brotli-nginx/deps/brotli-${BROTLI_VERSION} brotli-nginx/deps/brotli \
     && mv njs-${NJS_VERSION} njs
